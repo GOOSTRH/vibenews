@@ -10,6 +10,8 @@ A modern news website built with Next.js, TypeScript, and Tailwind CSS. VibeNews
 - Featured articles section
 - Latest news grid layout
 - Dark mode support
+- RSS feed integration with multiple news sources
+- Proxy service for reliable feed fetching
 
 ## Tech Stack
 
@@ -18,6 +20,7 @@ A modern news website built with Next.js, TypeScript, and Tailwind CSS. VibeNews
 - Tailwind CSS
 - React
 - Node.js
+- RSS Parser
 
 ## Getting Started
 
@@ -32,12 +35,23 @@ cd vibenews
 npm install
 ```
 
-3. Run the development server:
+3. Set up environment variables:
+   - Copy `.env.example` to `.env.local`
+   - Update the variables as needed:
+```bash
+# Development
+URL=http://localhost:3000
+
+# Production
+URL=https://your-domain.com
+```
+
+4. Run the development server:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Project Structure
 
@@ -45,13 +59,22 @@ npm run dev
 vibenews/
 ├── src/
 │   ├── app/
+│   │   ├── api/
+│   │   │   └── proxy/
+│   │   │       └── route.ts
 │   │   ├── layout.tsx
 │   │   └── page.tsx
-│   └── components/
-│       ├── Header.tsx
-│       └── Footer.tsx
+│   ├── components/
+│   │   ├── Header.tsx
+│   │   └── Footer.tsx
+│   ├── config/
+│   │   └── newsSources.ts
+│   └── lib/
+│       └── feedService.ts
 ├── public/
 │   └── images/
+├── .env.example
+├── .env.local (not in repo)
 ├── package.json
 └── README.md
 ```
@@ -62,6 +85,12 @@ vibenews/
 - `npm run build` - Build for production
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
+
+## Environment Variables
+
+- `URL`: The base URL of your application. Used for server-side feed fetching.
+  - Development: `http://localhost:3000`
+  - Production: Your domain (e.g., `https://vibenews.com`)
 
 ## Contributing
 

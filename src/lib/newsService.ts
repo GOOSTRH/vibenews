@@ -1,5 +1,6 @@
-import Parser from 'rss-parser';
 import { cache } from 'react';
+import { feedService } from './feedService';
+import { type NewsSource } from '@/config/newsSources';
 
 export interface NewsArticle {
   id: string;
@@ -12,41 +13,26 @@ export interface NewsArticle {
   categories: string[];
   thumbnail?: string;
   source: string;
+  region?: string;
+  language: string;
 }
 
-interface NewsSource {
-  name: string;
-  url: string;
-  type: 'rss' | 'api';
-  category: string;
+interface RSSItem {
+  guid?: string;
+  link?: string;
+  title?: string;
+  pubDate?: string;
+  isoDate?: string;
+  creator?: string;
+  author?: string;
+  content?: string;
+  contentEncoded?: string;
+  'content:encoded'?: string;
+  description?: string;
+  contentSnippet?: string;
+  mediaContent?: { $?: { url?: string } };
+  thumbnail?: { $?: { url?: string } };
 }
-
-const NEWS_SOURCES: NewsSource[] = [
-  {
-    name: 'TechCrunch',
-    url: 'https://techcrunch.com/feed/',
-    type: 'rss',
-    category: 'tech',
-  },
-  {
-    name: 'MIT Technology Review',
-    url: 'https://www.technologyreview.com/feed/',
-    type: 'rss',
-    category: 'science',
-  },
-  {
-    name: 'Wired',
-    url: 'https://www.wired.com/feed/category/artificial-intelligence/rss',
-    type: 'rss',
-    category: 'tech',
-  },
-  {
-    name: 'ArsTechnica',
-    url: 'https://feeds.arstechnica.com/arstechnica/technology-lab',
-    type: 'rss',
-    category: 'tech',
-  },
-];
 
 const TECH_KEYWORDS = [
   'ai', 'artificial intelligence', 'machine learning', 'deep learning',
@@ -58,60 +44,111 @@ const TECH_KEYWORDS = [
   'processor', 'chip', 'silicon', 'mobile', 'app',
 ];
 
+const CATEGORY_KEYWORDS = {
+  world: ['global', 'international', 'worldwide', 'foreign', 'overseas'],
+  politics: ['regulation', 'policy', 'government', 'legislation', 'compliance', 'privacy'],
+  business: ['market', 'startup', 'investment', 'venture capital', 'acquisition', 'ipo'],
+  technology: TECH_KEYWORDS,
+  culture: ['society', 'impact', 'lifestyle', 'future', 'transformation', 'adoption'],
+  science: ['research', 'breakthrough', 'discovery', 'innovation', 'study', 'development']
+};
+
 const CACHE_DURATION = 1000 * 60 * 15; // 15 minutes
 let lastFetch = 0;
 let cachedArticles: NewsArticle[] = [];
 
-const parser = new Parser({
-  customFields: {
-    item: [
-      ['media:content', 'mediaContent'],
-      ['media:thumbnail', 'thumbnail'],
-    ],
-  },
-});
-
-const isTechRelated = (article: NewsArticle): boolean => {
-  const content = `${article.title} ${article.contentSnippet}`.toLowerCase();
-  return TECH_KEYWORDS.some(keyword => content.includes(keyword));
+const isTechRelated = (content: string): boolean => {
+  const lowerContent = content.toLowerCase();
+  return TECH_KEYWORDS.some(keyword => lowerContent.includes(keyword));
 };
 
-export const categorizeArticle = (article: NewsArticle): string[] => {
-  const keywords = {
-    ai: ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'llm', 'gpt'],
-    tech: ['technology', 'software', 'hardware', 'digital', 'cloud', 'mobile', 'app', 'startup'],
-    science: ['research', 'quantum', 'semiconductor', 'engineering', 'innovation'],
-    economics: ['market', 'startup', 'investment', 'venture capital', 'funding', 'acquisition'],
-  };
-
+export const categorizeArticle = (content: string): string[] => {
   const categories = new Set<string>();
-  const content = `${article.title} ${article.contentSnippet}`.toLowerCase();
+  const lowerContent = content.toLowerCase();
 
-  Object.entries(keywords).forEach(([category, terms]) => {
-    if (terms.some(term => content.includes(term))) {
+  // Check tech keywords first
+  if (isTechRelated(content)) {
+    categories.add('tech');
+  }
+
+  // Check other categories
+  Object.entries(CATEGORY_KEYWORDS).forEach(([category, keywords]) => {
+    if (keywords.some(keyword => lowerContent.includes(keyword))) {
       categories.add(category);
     }
   });
 
-  // Always include 'tech' as a base category if AI-related
-  if (categories.has('ai')) {
-    categories.add('tech');
+  // AI-specific categorization
+  const aiKeywords = ['ai', 'artificial intelligence', 'machine learning', 'neural network', 'deep learning'];
+  if (aiKeywords.some(keyword => lowerContent.includes(keyword))) {
+    categories.add('ai');
   }
 
   return Array.from(categories);
 };
 
-export const extractThumbnail = (article: any): string | undefined => {
-  if (article.mediaContent?.$?.url) {
-    return article.mediaContent.$.url;
+export const extractThumbnail = (item: RSSItem): string | undefined => {
+  if (item.mediaContent?.$?.url) {
+    return item.mediaContent.$.url;
   }
-  if (article.thumbnail?.$?.url) {
-    return article.thumbnail.$.url;
+  if (item.thumbnail?.$?.url) {
+    return item.thumbnail.$.url;
   }
   
   // Extract first image from content if available
-  const imgMatch = article.content?.match(/<img[^>]+src="([^">]+)"/);
-  return imgMatch?.[1];
+  const imgMatch = item.content?.match(/<img[^>]+src="([^">]+)"/);
+  if (imgMatch?.[1]) {
+    return imgMatch[1];
+  }
+
+  // Try content:encoded for WordPress feeds
+  const contentEncoded = item.contentEncoded || item['content:encoded'];
+  if (contentEncoded) {
+    const encodedImgMatch = contentEncoded.match(/<img[^>]+src="([^">]+)"/);
+    return encodedImgMatch?.[1];
+  }
+};
+
+const processArticle = (item: RSSItem, source: NewsSource): NewsArticle | null => {
+  try {
+    // Basic validation
+    if (!item.title?.trim() || !item.link) {
+      return null;
+    }
+
+    const content = `${item.title} ${item.contentSnippet || item.description || ''}`;
+    
+    // Only process tech-related content
+    if (!isTechRelated(content)) {
+      return null;
+    }
+
+    const article: NewsArticle = {
+      id: item.guid || item.link || `${source.id}-${Date.now()}-${Math.random()}`,
+      title: item.title.trim(),
+      link: item.link,
+      pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
+      creator: item.creator || item.author || source.name,
+      content: item.content || item.contentEncoded || item['content:encoded'] || item.description || '',
+      contentSnippet: item.contentSnippet || item.description || '',
+      categories: categorizeArticle(content),
+      thumbnail: extractThumbnail(item),
+      source: source.name,
+      region: source.region,
+      language: source.language,
+    };
+
+    // Validate date
+    const date = new Date(article.pubDate);
+    if (isNaN(date.getTime())) {
+      article.pubDate = new Date().toISOString();
+    }
+
+    return article;
+  } catch (error) {
+    console.error(`Error processing article from ${source.name}:`, error);
+    return null;
+  }
 };
 
 export const fetchNews = cache(async (): Promise<NewsArticle[]> => {
@@ -123,47 +160,35 @@ export const fetchNews = cache(async (): Promise<NewsArticle[]> => {
   }
 
   try {
-    const articles = await Promise.all(
-      NEWS_SOURCES.map(async (source) => {
-        try {
-          const feed = await parser.parseURL(source.url);
-          return feed.items
-            .map((item: any) => ({
-              id: item.guid || item.link,
-              title: item.title,
-              link: item.link,
-              pubDate: item.pubDate || item.isoDate,
-              creator: item.creator || item.author,
-              content: item.content,
-              contentSnippet: item.contentSnippet || item.description,
-              categories: [],  // Will be populated by categorizeArticle
-              thumbnail: extractThumbnail(item),
-              source: source.name,
-            }))
-            .filter(isTechRelated); // Filter out non-tech content
-        } catch (error) {
-          console.error(`Error fetching from ${source.name}:`, error);
-          return [];
-        }
-      })
-    );
+    const feedResults = await feedService.fetchAllFeeds();
+    
+    const articles = feedResults
+      .flatMap(({ source, items }) => 
+        items
+          .map((item: RSSItem) => processArticle(item, source))
+          .filter((article: NewsArticle | null): article is NewsArticle => article !== null)
+      )
+      .sort((a, b) => {
+        const dateA = new Date(a.pubDate).getTime();
+        const dateB = new Date(b.pubDate).getTime();
+        return isNaN(dateA) || isNaN(dateB) ? 0 : dateB - dateA;
+      });
 
-    // Flatten, sort by date, and categorize
-    const flatArticles = articles
-      .flat()
-      .map(article => ({
-        ...article,
-        categories: categorizeArticle(article),
-      }))
-      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+    if (articles.length === 0 && cachedArticles.length > 0) {
+      console.warn('No new articles fetched, using cached articles');
+      return cachedArticles;
+    }
 
     // Update cache
-    cachedArticles = flatArticles;
+    cachedArticles = articles;
     lastFetch = now;
 
-    return flatArticles;
+    return articles;
   } catch (error) {
     console.error('Error fetching news:', error);
-    return cachedArticles; // Return cached articles on error
+    if (cachedArticles.length > 0) {
+      return cachedArticles;
+    }
+    return [];
   }
 }); 
