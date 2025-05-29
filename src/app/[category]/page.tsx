@@ -15,11 +15,10 @@ const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   culture: 'Digital transformation and technology\'s impact on society',
 };
 
-interface CategoryPageProps {
-  params: {
-    category: string;
-  };
-}
+type PageProps = {
+  params: { category: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
 // Validate and normalize category
 function validateCategory(category: string): Category | null {
@@ -106,7 +105,11 @@ function CategorySkeleton() {
   );
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
+interface Props {
+  params: { category: string };
+}
+
+export default function CategoryPage({ params }: Props) {
   // Force dynamic rendering to prevent hydration issues
   headers();
   
