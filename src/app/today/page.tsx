@@ -1,12 +1,25 @@
-'use client';
-
 import { Suspense } from 'react';
 import { fetchNews } from '@/lib/newsService';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import type { NewsArticle } from '@/lib/newsService';
+import NewsSection from '@/components/NewsSectionClient';
 
 async function generateDailySummary(articles: NewsArticle[]) {
+  if (!articles || articles.length === 0) {
+    return {
+      date: format(new Date(), 'MMMM d, yyyy'),
+      featuredStory: null,
+      aiTrends: [],
+      techTrends: [],
+      businessTrends: [],
+      worldTrends: [],
+      politicsTrends: [],
+      scienceTrends: [],
+      asianTechNews: []
+    };
+  }
+
   // Group articles by category for analysis
   const categories = articles.reduce((acc, article) => {
     article.categories.forEach((category: string) => {
@@ -68,127 +81,132 @@ function TodaySkeleton() {
   );
 }
 
-function NewsSection({ title, articles }: { title: string; articles: NewsArticle[] }) {
-  if (!articles.length) return null;
-
+function NoArticlesMessage() {
   return (
-    <section className="mb-8">
-      <h2 className="text-2xl font-bold mb-4 text-blue-900 dark:text-blue-100">{title}</h2>
-      <div className="grid md:grid-cols-2 gap-6">
-        {articles.map((article, i) => (
-          <a
-            key={article.id}
-            href={article.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-          >
-            {article.thumbnail && (
-              <div className="relative aspect-[16/9]">
-                <Image
-                  src={article.thumbnail}
-                  alt={article.title}
-                  fill
-                  className="object-cover transition-opacity group-hover:opacity-90"
-                />
-              </div>
-            )}
-            <div className="p-4">
-              <h3 className="font-bold text-lg mb-2 group-hover:text-blue-500">{article.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Source: {article.source} {article.region && `(${article.region})`}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                {article.contentSnippet}
-              </p>
-            </div>
-          </a>
-        ))}
+    <div className="text-center py-12">
+      <div className="max-w-md mx-auto">
+        <h2 className="text-xl font-semibold mb-2">No Articles Available</h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          We're having trouble fetching the latest articles. Please try again later.
+        </p>
       </div>
-    </section>
+    </div>
   );
 }
 
+// Server Component
 async function TodayContent() {
-  const articles = await fetchNews();
-  const summary = await generateDailySummary(articles);
+  try {
+    const articles = await fetchNews();
+    const summary = await generateDailySummary(articles);
 
-  return (
-    <article className="prose prose-sm dark:prose-invert max-w-none">
-      <header className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
-        <h1 className="text-4xl font-bold mb-3">Tech Pulse: Daily Briefing</h1>
-        <time className="text-gray-600 dark:text-gray-400 text-lg">{summary.date}</time>
-      </header>
+    if (!articles || articles.length === 0) {
+      return <NoArticlesMessage />;
+    }
 
-      {summary.featuredStory.thumbnail && (
-        <div className="relative aspect-[2/1] mb-8 rounded-xl overflow-hidden shadow-lg">
-          <Image
-            src={summary.featuredStory.thumbnail}
-            alt={summary.featuredStory.title}
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h2 className="text-2xl font-bold mb-2">{summary.featuredStory.title}</h2>
-            <p className="text-sm opacity-90">Source: {summary.featuredStory.source}</p>
+    return (
+      <article className="prose prose-sm dark:prose-invert max-w-none">
+        <header className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
+          <h1 className="text-4xl font-bold mb-3">Tech Pulse: Daily Briefing</h1>
+          <time className="text-gray-600 dark:text-gray-400 text-lg">{summary.date}</time>
+        </header>
+
+        {summary.featuredStory && summary.featuredStory.thumbnail && (
+          <div className="relative aspect-[2/1] mb-8 rounded-xl overflow-hidden shadow-lg">
+            <Image
+              src={summary.featuredStory.thumbnail}
+              alt={summary.featuredStory.title}
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+              <h2 className="text-2xl font-bold mb-2">{summary.featuredStory.title}</h2>
+              <p className="text-sm opacity-90">Source: {summary.featuredStory.source}</p>
+            </div>
+          </div>
+        )}
+
+        {summary.aiTrends.length > 0 && (
+          <NewsSection title="AI & Machine Learning" articles={summary.aiTrends} />
+        )}
+        {summary.techTrends.length > 0 && (
+          <NewsSection title="Tech Innovation" articles={summary.techTrends} />
+        )}
+        {summary.asianTechNews.length > 0 && (
+          <NewsSection title="Asian Tech Insights" articles={summary.asianTechNews} />
+        )}
+        
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            {summary.businessTrends.length > 0 && (
+              <NewsSection title="Business & Markets" articles={summary.businessTrends} />
+            )}
+            {summary.worldTrends.length > 0 && (
+              <NewsSection title="Global Tech Impact" articles={summary.worldTrends} />
+            )}
+          </div>
+          <div>
+            {summary.politicsTrends.length > 0 && (
+              <NewsSection title="Tech Policy" articles={summary.politicsTrends} />
+            )}
+            {summary.scienceTrends.length > 0 && (
+              <NewsSection title="Science & Research" articles={summary.scienceTrends} />
+            )}
           </div>
         </div>
-      )}
 
-      <NewsSection title="AI & Machine Learning" articles={summary.aiTrends} />
-      <NewsSection title="Tech Innovation" articles={summary.techTrends} />
-      <NewsSection title="Asian Tech Insights" articles={summary.asianTechNews} />
-      
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <NewsSection title="Business & Markets" articles={summary.businessTrends} />
-          <NewsSection title="Global Tech Impact" articles={summary.worldTrends} />
-        </div>
-        <div>
-          <NewsSection title="Tech Policy" articles={summary.politicsTrends} />
-          <NewsSection title="Science & Research" articles={summary.scienceTrends} />
-        </div>
-      </div>
+        {(summary.aiTrends[0] || summary.techTrends[0] || summary.asianTechNews[0]) && (
+          <section className="mt-12 p-6 bg-blue-900/20 rounded-xl">
+            <h2 className="text-2xl font-bold mb-6">Key Takeaways</h2>
+            <ul className="space-y-4 text-lg">
+              {summary.aiTrends[0] && (
+                <li className="flex items-start">
+                  <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
+                  <div>
+                    <strong className="text-blue-200">AI Developments:</strong>
+                    <span className="opacity-90"> {summary.aiTrends[0].title}</span>
+                  </div>
+                </li>
+              )}
+              {summary.techTrends[0] && (
+                <li className="flex items-start">
+                  <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
+                  <div>
+                    <strong className="text-blue-200">Tech Innovation:</strong>
+                    <span className="opacity-90"> {summary.techTrends[0].title}</span>
+                  </div>
+                </li>
+              )}
+              {summary.asianTechNews[0] && (
+                <li className="flex items-start">
+                  <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
+                  <div>
+                    <strong className="text-blue-200">Asian Markets:</strong>
+                    <span className="opacity-90"> {summary.asianTechNews[0].title}</span>
+                  </div>
+                </li>
+              )}
+            </ul>
+          </section>
+        )}
 
-      <section className="mt-12 p-8 bg-blue-900 dark:bg-blue-950 text-white rounded-xl">
-        <h2 className="text-2xl font-bold mb-6">Key Takeaways</h2>
-        <ul className="space-y-4 text-lg">
-          <li className="flex items-start">
-            <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
-            <div>
-              <strong className="text-blue-200">AI Developments:</strong>
-              <span className="opacity-90"> {summary.aiTrends[0]?.title}</span>
-            </div>
-          </li>
-          <li className="flex items-start">
-            <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
-            <div>
-              <strong className="text-blue-200">Tech Innovation:</strong>
-              <span className="opacity-90"> {summary.techTrends[0]?.title}</span>
-            </div>
-          </li>
-          <li className="flex items-start">
-            <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
-            <div>
-              <strong className="text-blue-200">Asian Markets:</strong>
-              <span className="opacity-90"> {summary.asianTechNews[0]?.title}</span>
-            </div>
-          </li>
-        </ul>
-      </section>
-
-      <footer className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          This briefing is automatically curated from today's most significant tech news stories. 
-          For detailed coverage, click through to the individual articles in our main feed.
-        </p>
-      </footer>
-    </article>
-  );
+        <footer className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This briefing is automatically curated from today's most significant tech news stories. 
+            For detailed coverage, click through to the individual articles in our main feed.
+          </p>
+        </footer>
+      </article>
+    );
+  } catch (error) {
+    console.error('Error in TodayContent:', error);
+    return <NoArticlesMessage />;
+  }
 }
 
+// Page Component
 export default function TodayPage() {
   return (
     <div className="container max-w-4xl py-6">
