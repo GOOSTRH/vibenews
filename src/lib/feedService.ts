@@ -22,7 +22,7 @@ class FeedService {
   private readonly MAX_ERRORS = 100;
   private readonly MAX_RETRIES = 3;
   private readonly TIMEOUT = 15000; // 15 seconds
-  private readonly USE_PROXY = true; // Enable proxy by default
+  private readonly USE_PROXY = process.env.NODE_ENV === 'production'; // Only use proxy in production
 
   constructor() {
     this.parser = new Parser({
@@ -74,9 +74,13 @@ class FeedService {
   }
 
   private getProxyUrl(url: string): string {
+    // Get the base URL from environment variables or construct it
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.URL || 'http://localhost:3000';
+    
     // Encode the URL properly for the proxy
     const encodedUrl = encodeURIComponent(url);
-    const baseUrl = process.env.URL || 'http://localhost:3000';
     return `${baseUrl}/api/proxy?url=${encodedUrl}`;
   }
 
@@ -95,6 +99,7 @@ class FeedService {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'application/rss+xml, application/xml, application/atom+xml, text/xml, */*',
           },
+          next: { revalidate: 300 }, // Cache for 5 minutes
         });
 
         clearTimeout(timeoutId);
