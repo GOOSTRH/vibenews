@@ -29,19 +29,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} dark`}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </head>
       <body className={`${inter.className} bg-[#121212] min-h-screen`}>
-        <header className="bg-[#1e1e1e] border-b border-gray-800">
+        <header className="bg-[#1e1e1e] border-b border-gray-800 sticky top-0 z-50">
           <nav className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <Link href="/" className="text-xl font-bold text-white hover:text-blue-400">
                 VibeNews
               </Link>
-              <div className="flex gap-6">
+              <div className="flex flex-wrap gap-4 sm:gap-6 text-sm">
                 {NAVIGATION.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="text-sm text-gray-300 hover:text-white transition-colors"
+                    className="text-gray-300 hover:text-white transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -52,9 +55,9 @@ export default function RootLayout({
         </header>
 
         <main className="min-h-screen bg-[#121212]">
-          <div className="container mx-auto">
-            <div className="max-w-screen-xl mx-auto bg-[#1e1e1e] min-h-screen px-6">
-        {children}
+          <div className="container mx-auto px-4">
+            <div className="max-w-screen-xl mx-auto bg-[#1e1e1e] min-h-screen">
+              {children}
             </div>
           </div>
         </main>

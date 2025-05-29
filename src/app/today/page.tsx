@@ -105,40 +105,43 @@ async function TodayContent() {
     }
 
     return (
-      <article className="prose prose-sm dark:prose-invert max-w-none">
-        <header className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
-          <h1 className="text-4xl font-bold mb-3">Tech Pulse: Daily Briefing</h1>
-          <time className="text-gray-600 dark:text-gray-400 text-lg">{summary.date}</time>
+      <article className="prose prose-sm dark:prose-invert max-w-none px-4 sm:px-6">
+        <header className="mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-gray-200 dark:border-gray-800">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-3">Tech Pulse: Daily Briefing</h1>
+          <time className="text-base sm:text-lg text-gray-600 dark:text-gray-400">{summary.date}</time>
         </header>
 
         {summary.featuredStory && summary.featuredStory.thumbnail && (
-          <div className="relative aspect-[2/1] mb-8 rounded-xl overflow-hidden shadow-lg">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1] mb-6 sm:mb-8 rounded-xl overflow-hidden shadow-lg">
             <Image
               src={summary.featuredStory.thumbnail}
               alt={summary.featuredStory.title}
               fill
               className="object-cover"
               priority
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <h2 className="text-2xl font-bold mb-2">{summary.featuredStory.title}</h2>
-              <p className="text-sm opacity-90">Source: {summary.featuredStory.source}</p>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-bold mb-2 text-white">{summary.featuredStory.title}</h2>
+              <p className="text-sm text-gray-200">Source: {summary.featuredStory.source}</p>
             </div>
           </div>
         )}
 
-        {summary.aiTrends.length > 0 && (
-          <NewsSection title="AI & Machine Learning" articles={summary.aiTrends} />
-        )}
-        {summary.techTrends.length > 0 && (
-          <NewsSection title="Tech Innovation" articles={summary.techTrends} />
-        )}
-        {summary.asianTechNews.length > 0 && (
-          <NewsSection title="Asian Tech Insights" articles={summary.asianTechNews} />
-        )}
+        <div className="space-y-8">
+          {summary.aiTrends.length > 0 && (
+            <NewsSection title="AI & Machine Learning" articles={summary.aiTrends} />
+          )}
+          {summary.techTrends.length > 0 && (
+            <NewsSection title="Tech Innovation" articles={summary.techTrends} />
+          )}
+          {summary.asianTechNews.length > 0 && (
+            <NewsSection title="Asian Tech Insights" articles={summary.asianTechNews} />
+          )}
+        </div>
         
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-8">
           <div>
             {summary.businessTrends.length > 0 && (
               <NewsSection title="Business & Markets" articles={summary.businessTrends} />
@@ -158,9 +161,9 @@ async function TodayContent() {
         </div>
 
         {(summary.aiTrends[0] || summary.techTrends[0] || summary.asianTechNews[0]) && (
-          <section className="mt-12 p-6 bg-blue-900/20 rounded-xl">
-            <h2 className="text-2xl font-bold mb-6">Key Takeaways</h2>
-            <ul className="space-y-4 text-lg">
+          <section className="mt-8 sm:mt-12 p-4 sm:p-6 bg-blue-900/20 rounded-xl">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Key Takeaways</h2>
+            <ul className="space-y-4 text-base sm:text-lg">
               {summary.aiTrends[0] && (
                 <li className="flex items-start">
                   <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
@@ -192,7 +195,7 @@ async function TodayContent() {
           </section>
         )}
 
-        <footer className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800">
+        <footer className="mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             This briefing is automatically curated from today's most significant tech news stories. 
             For detailed coverage, click through to the individual articles in our main feed.
@@ -209,7 +212,7 @@ async function TodayContent() {
 // Page Component
 export default function TodayPage() {
   return (
-    <div className="container max-w-4xl py-6">
+    <div className="container max-w-4xl py-4 sm:py-6">
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>

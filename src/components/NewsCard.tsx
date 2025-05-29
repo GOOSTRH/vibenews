@@ -36,47 +36,51 @@ export default function NewsCard({ article }: NewsCardProps) {
       rel="noopener noreferrer"
       className="group block bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
     >
-      <div className="p-2">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="md:w-40 flex-shrink-0">
-            <div className="relative aspect-[16/9] md:aspect-square rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700">
-              <Image
-                src={imageError ? getFallbackImage() : (article.thumbnail || getFallbackImage())}
-                alt={article.title}
-                fill
-                className="object-cover transition-opacity group-hover:opacity-90"
-                sizes="(max-width: 768px) 100vw, 160px"
-                onError={() => setImageError(true)}
-                priority={false}
-              />
-            </div>
+      <div className="flex flex-col sm:flex-row gap-3 p-3">
+        <div className="w-full sm:w-40 flex-shrink-0">
+          <div className="relative aspect-[16/9] sm:aspect-square rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700">
+            <Image
+              src={imageError ? getFallbackImage() : (article.thumbnail || getFallbackImage())}
+              alt={article.title}
+              fill
+              className="object-cover transition-opacity group-hover:opacity-90"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 160px"
+              onError={() => setImageError(true)}
+              priority={false}
+            />
+          </div>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-1">
+            <span className="font-medium">{article.source}</span>
+            {article.region && (
+              <>
+                <span>•</span>
+                <span>{article.region}</span>
+              </>
+            )}
+            <span>•</span>
+            <time>{formattedDate}</time>
           </div>
           
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-1">
-              <span>{article.source}</span>
-              <span>•</span>
-              <time>{formattedDate}</time>
-            </div>
-            
-            <h2 className="text-base font-semibold leading-snug mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
-              {article.title}
-            </h2>
-            
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-              {article.contentSnippet}
-            </p>
+          <h2 className="text-base font-semibold leading-snug mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
+            {article.title}
+          </h2>
+          
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+            {article.contentSnippet}
+          </p>
 
-            <div className="flex flex-wrap gap-1 mt-2">
-              {article.categories.map((category) => (
-                <span
-                  key={category}
-                  className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                >
-                  {category}
-                </span>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-1">
+            {article.categories.map((category) => (
+              <span
+                key={category}
+                className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+              >
+                {category}
+              </span>
+            ))}
           </div>
         </div>
       </div>

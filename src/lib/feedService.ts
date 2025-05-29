@@ -75,9 +75,19 @@ class FeedService {
 
   private getProxyUrl(url: string): string {
     // Get the base URL from environment variables or construct it
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.URL || 'http://localhost:3000';
+    let baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_URL;
+
+    // Fallback to window.location in the browser
+    if (typeof window !== 'undefined' && !baseUrl) {
+      baseUrl = window.location.origin;
+    }
+
+    // Final fallback
+    if (!baseUrl) {
+      baseUrl = 'http://localhost:3000';
+    }
     
     // Encode the URL properly for the proxy
     const encodedUrl = encodeURIComponent(url);
