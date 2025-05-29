@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const headers = new Headers({
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': '*',
   });
 
   // Handle preflight requests
@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
   const encodedUrl = request.nextUrl.searchParams.get('url');
   
   if (!encodedUrl) {
+    console.error('[Proxy] Missing URL parameter');
     return NextResponse.json(
       { error: 'URL parameter is required' },
       { status: 400, headers }
@@ -27,6 +28,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const url = decodeURIComponent(encodedUrl);
+    console.log('[Proxy] Fetching URL:', url);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -36,6 +39,7 @@ export async function GET(request: NextRequest) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'application/rss+xml, application/xml, application/atom+xml, text/xml, */*',
       },
+      cache: 'no-store',
     });
 
     clearTimeout(timeoutId);
@@ -45,24 +49,30 @@ export async function GET(request: NextRequest) {
     }
 
     const contentType = response.headers.get('content-type');
+    console.log('[Proxy] Response content type:', contentType);
+
     const text = await response.text();
+    console.log('[Proxy] Response length:', text.length);
 
     // Validate RSS/XML content
     if (!text.includes('<rss') && !text.includes('<feed') && !text.includes('<?xml')) {
+      console.error('[Proxy] Invalid feed format received');
       throw new Error('Invalid feed format');
     }
 
     // Merge the CORS headers with the response headers
     const responseHeaders = new Headers(headers);
     responseHeaders.set('Content-Type', contentType || 'application/xml');
-    responseHeaders.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=300');
+    responseHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    responseHeaders.set('Pragma', 'no-cache');
+    responseHeaders.set('Expires', '0');
 
     return new NextResponse(text, {
       status: 200,
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error(`Proxy error for ${encodedUrl}:`, error);
+    console.error(`[Proxy] Error for ${encodedUrl}:`, error);
     
     // Return a more detailed error response
     return NextResponse.json({
@@ -74,6 +84,9 @@ export async function GET(request: NextRequest) {
       headers: {
         ...headers,
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
       },
     });
   }

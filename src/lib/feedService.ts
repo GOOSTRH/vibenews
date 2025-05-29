@@ -22,7 +22,7 @@ class FeedService {
   private readonly MAX_ERRORS = 100;
   private readonly MAX_RETRIES = 3;
   private readonly TIMEOUT = 15000; // 15 seconds
-  private readonly USE_PROXY = process.env.NODE_ENV === 'production'; // Only use proxy in production
+  private readonly USE_PROXY = true; // Always use proxy to avoid CORS issues
 
   constructor() {
     this.parser = new Parser({
@@ -74,24 +74,35 @@ class FeedService {
   }
 
   private getProxyUrl(url: string): string {
-    // Get the base URL from environment variables or construct it
-    let baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
-      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_URL;
+    try {
+      // Get the base URL from environment variables or window.location
+      let baseUrl = '';
+      
+      if (typeof window !== 'undefined') {
+        // Client-side: use window.location
+        baseUrl = window.location.origin;
+      } else {
+        // Server-side: use environment variables
+        baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+          ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+          : process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+      }
 
-    // Fallback to window.location in the browser
-    if (typeof window !== 'undefined' && !baseUrl) {
-      baseUrl = window.location.origin;
+      // Log the constructed base URL for debugging
+      console.log('[FeedService] Using base URL:', baseUrl);
+      
+      // Encode the URL properly for the proxy
+      const encodedUrl = encodeURIComponent(url);
+      const proxyUrl = `${baseUrl}/api/proxy?url=${encodedUrl}`;
+      
+      // Log the final proxy URL for debugging
+      console.log('[FeedService] Proxy URL:', proxyUrl);
+      
+      return proxyUrl;
+    } catch (error) {
+      console.error('[FeedService] Error constructing proxy URL:', error);
+      throw error;
     }
-
-    // Final fallback
-    if (!baseUrl) {
-      baseUrl = 'http://localhost:3000';
-    }
-    
-    // Encode the URL properly for the proxy
-    const encodedUrl = encodeURIComponent(url);
-    return `${baseUrl}/api/proxy?url=${encodedUrl}`;
   }
 
   private async fetchWithRetry(url: string, retries = this.MAX_RETRIES): Promise<string> {
@@ -100,6 +111,8 @@ class FeedService {
     
     for (let i = 0; i < retries; i++) {
       try {
+        console.log(`[FeedService] Attempt ${i + 1}/${retries} to fetch:`, fetchUrl);
+        
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT);
 
@@ -109,7 +122,7 @@ class FeedService {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'application/rss+xml, application/xml, application/atom+xml, text/xml, */*',
           },
-          next: { revalidate: 300 }, // Cache for 5 minutes
+          cache: 'no-store', // Disable cache to ensure fresh content
         });
 
         clearTimeout(timeoutId);
@@ -119,6 +132,10 @@ class FeedService {
         }
 
         const text = await response.text();
+        
+        // Log response details for debugging
+        console.log(`[FeedService] Response status:`, response.status);
+        console.log(`[FeedService] Content type:`, response.headers.get('content-type'));
         
         // Check if we got an HTML error page instead of RSS
         if (text.includes('<!DOCTYPE html>') && !text.includes('<rss') && !text.includes('<feed')) {
@@ -133,16 +150,18 @@ class FeedService {
               throw new Error(errorResponse.error);
             }
           } catch (e) {
-            // If we can't parse the error, continue with the response
+            console.warn('[FeedService] Could not parse error response:', e);
           }
         }
 
         return text;
       } catch (error) {
+        console.error(`[FeedService] Attempt ${i + 1} failed:`, error);
         lastError = error as Error;
         if (i < retries - 1) {
-          // Wait before retrying, with exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+          const delay = Math.pow(2, i) * 1000;
+          console.log(`[FeedService] Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
