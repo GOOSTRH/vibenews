@@ -32,7 +32,7 @@ export default function Home() {
           {/* Main content area */}
           <div className="lg:col-span-4">
             <Suspense fallback={<NewsSkeletonLoader />}>
-              <NewsFeed />
+              <NewsFeed/>
             </Suspense>
           </div>
         </div>

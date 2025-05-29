@@ -74,7 +74,7 @@
 
   .input {
     @apply px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-[#333333] bg-white dark:bg-[#252525] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
-  }
+}
 
   .nav-link {
     @apply px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-[#e0e0e0] hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200;
@@ -115,7 +115,7 @@
 /* News card styles */
 .news-card {
   @apply card overflow-hidden;
-}
+  }
 
 .news-card-image {
   @apply relative w-full;

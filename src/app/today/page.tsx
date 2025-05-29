@@ -1,3 +1,5 @@
+'use client';
+
 import { Suspense } from 'react';
 import { fetchNews } from '@/lib/newsService';
 import { format } from 'date-fns';
@@ -16,9 +18,12 @@ async function generateDailySummary(articles: NewsArticle[]) {
     return acc;
   }, {} as Record<string, NewsArticle[]>);
 
-  // Get top stories by category
+  // Get stories by category
   const aiStories = categories['ai'] || [];
   const techStories = categories['tech'] || [];
+  const businessStories = categories['business'] || [];
+  const worldStories = categories['world'] || [];
+  const politicsStories = categories['politics'] || [];
   const scienceStories = categories['science'] || [];
   
   // Sort all stories by date for trending analysis
@@ -31,36 +36,21 @@ async function generateDailySummary(articles: NewsArticle[]) {
     (story.categories.includes('ai') || story.categories.includes('tech')) && story.thumbnail
   ) || allStories[0];
 
-  // Generate the main trends
-  const mainTrends = allStories.slice(0, 3).map(story => ({
-    title: story.title,
-    source: story.source,
-    link: story.link,
-    image: story.thumbnail
-  }));
-  
-  // Generate AI/ML focus
-  const aiTrends = aiStories.slice(0, 2).map(story => ({
-    title: story.title,
-    source: story.source,
-    link: story.link,
-    image: story.thumbnail
-  }));
-
-  // Generate emerging tech
-  const techTrends = techStories.slice(0, 2).map(story => ({
-    title: story.title,
-    source: story.source,
-    link: story.link,
-    image: story.thumbnail
-  }));
+  // Generate regional insights
+  const asianTechNews = allStories.filter(story => 
+    ['korea', 'japan', 'china'].includes(story.region || '')
+  ).slice(0, 4);
 
   return {
     date: format(new Date(), 'MMMM d, yyyy'),
     featuredStory,
-    mainTrends,
-    aiTrends,
-    techTrends
+    aiTrends: aiStories.slice(0, 4),
+    techTrends: techStories.slice(0, 4),
+    businessTrends: businessStories.slice(0, 3),
+    worldTrends: worldStories.slice(0, 3),
+    politicsTrends: politicsStories.slice(0, 3),
+    scienceTrends: scienceStories.slice(0, 3),
+    asianTechNews
   };
 }
 
@@ -78,19 +68,60 @@ function TodaySkeleton() {
   );
 }
 
+function NewsSection({ title, articles }: { title: string; articles: NewsArticle[] }) {
+  if (!articles.length) return null;
+
+  return (
+    <section className="mb-8">
+      <h2 className="text-2xl font-bold mb-4 text-blue-900 dark:text-blue-100">{title}</h2>
+      <div className="grid md:grid-cols-2 gap-6">
+        {articles.map((article, i) => (
+          <a
+            key={article.id}
+            href={article.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+          >
+            {article.thumbnail && (
+              <div className="relative aspect-[16/9]">
+                <Image
+                  src={article.thumbnail}
+                  alt={article.title}
+                  fill
+                  className="object-cover transition-opacity group-hover:opacity-90"
+                />
+              </div>
+            )}
+            <div className="p-4">
+              <h3 className="font-bold text-lg mb-2 group-hover:text-blue-500">{article.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Source: {article.source} {article.region && `(${article.region})`}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                {article.contentSnippet}
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 async function TodayContent() {
   const articles = await fetchNews();
   const summary = await generateDailySummary(articles);
 
   return (
     <article className="prose prose-sm dark:prose-invert max-w-none">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Tech Pulse: Daily Briefing</h1>
-        <time className="text-gray-600 dark:text-gray-400">{summary.date}</time>
+      <header className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-4xl font-bold mb-3">Tech Pulse: Daily Briefing</h1>
+        <time className="text-gray-600 dark:text-gray-400 text-lg">{summary.date}</time>
       </header>
 
       {summary.featuredStory.thumbnail && (
-        <div className="relative aspect-[2/1] mb-8 rounded-lg overflow-hidden">
+        <div className="relative aspect-[2/1] mb-8 rounded-xl overflow-hidden shadow-lg">
           <Image
             src={summary.featuredStory.thumbnail}
             alt={summary.featuredStory.title}
@@ -98,99 +129,57 @@ async function TodayContent() {
             className="object-cover"
             priority
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <h2 className="text-2xl font-bold mb-2">{summary.featuredStory.title}</h2>
+            <p className="text-sm opacity-90">Source: {summary.featuredStory.source}</p>
+          </div>
         </div>
       )}
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold mb-4">Today's Tech Landscape</h2>
-        <p className="mb-4">
-          In today's rapidly evolving tech landscape, several key developments are shaping the industry. 
-          <strong>{
-            summary.mainTrends[0]?.title.toLowerCase().startsWith('the') ? 
-            summary.mainTrends[0].title : 'The ' + summary.mainTrends[0].title
-          }</strong>. Meanwhile, <strong>{
-            summary.mainTrends[1]?.title.toLowerCase().startsWith('the') ? 
-            summary.mainTrends[1].title : 'the ' + summary.mainTrends[1].title
-          }</strong>, highlighting the dynamic nature of technological advancement.
-        </p>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-bold mb-4">AI and Innovation Spotlight</h2>
-        <div className="grid md:grid-cols-2 gap-6 mb-4">
-          {summary.aiTrends.map((trend, i) => (
-            <div key={i} className="relative">
-              {trend.image && (
-                <div className="relative aspect-[16/9] mb-3 rounded-lg overflow-hidden">
-                  <Image
-                    src={trend.image}
-                    alt={trend.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <h3 className="font-semibold mb-2">{trend.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Source: {trend.source}
-              </p>
-            </div>
-          ))}
+      <NewsSection title="AI & Machine Learning" articles={summary.aiTrends} />
+      <NewsSection title="Tech Innovation" articles={summary.techTrends} />
+      <NewsSection title="Asian Tech Insights" articles={summary.asianTechNews} />
+      
+      <div className="grid md:grid-cols-2 gap-8">
+        <div>
+          <NewsSection title="Business & Markets" articles={summary.businessTrends} />
+          <NewsSection title="Global Tech Impact" articles={summary.worldTrends} />
         </div>
-        <p>
-          The artificial intelligence sector continues to evolve, with notable developments in 
-          <strong> {summary.aiTrends[0]?.title}</strong>. These advancements signal significant 
-          progress in the field of AI and its practical applications.
-        </p>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-bold mb-4">Emerging Technologies</h2>
-        <div className="grid md:grid-cols-2 gap-6 mb-4">
-          {summary.techTrends.map((trend, i) => (
-            <div key={i} className="relative">
-              {trend.image && (
-                <div className="relative aspect-[16/9] mb-3 rounded-lg overflow-hidden">
-                  <Image
-                    src={trend.image}
-                    alt={trend.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <h3 className="font-semibold mb-2">{trend.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Source: {trend.source}
-              </p>
-            </div>
-          ))}
+        <div>
+          <NewsSection title="Tech Policy" articles={summary.politicsTrends} />
+          <NewsSection title="Science & Research" articles={summary.scienceTrends} />
         </div>
-        <p>
-          In the broader technology sector, <strong>{summary.techTrends[0]?.title}</strong>. 
-          This development comes as tech companies continue to push boundaries and innovate 
-          across multiple domains.
-        </p>
-      </section>
+      </div>
 
-      <section>
-        <h2 className="text-xl font-bold mb-4">Key Takeaways</h2>
-        <ul className="list-none pl-0 space-y-2">
-          <li>
-            <strong>AI and Machine Learning:</strong> Continued innovation across industries
+      <section className="mt-12 p-8 bg-blue-900 dark:bg-blue-950 text-white rounded-xl">
+        <h2 className="text-2xl font-bold mb-6">Key Takeaways</h2>
+        <ul className="space-y-4 text-lg">
+          <li className="flex items-start">
+            <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
+            <div>
+              <strong className="text-blue-200">AI Developments:</strong>
+              <span className="opacity-90"> {summary.aiTrends[0]?.title}</span>
+            </div>
           </li>
-          <li>
-            <strong>Emerging Tech:</strong> Reshaping market dynamics and business processes
+          <li className="flex items-start">
+            <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
+            <div>
+              <strong className="text-blue-200">Tech Innovation:</strong>
+              <span className="opacity-90"> {summary.techTrends[0]?.title}</span>
+            </div>
           </li>
-          <li>
-            <strong>Industry Impact:</strong> Significant developments in {
-              summary.mainTrends[2]?.title || 'technology adoption'
-            }
+          <li className="flex items-start">
+            <span className="inline-block w-2 h-2 mt-2 mr-3 bg-blue-400 rounded-full"></span>
+            <div>
+              <strong className="text-blue-200">Asian Markets:</strong>
+              <span className="opacity-90"> {summary.asianTechNews[0]?.title}</span>
+            </div>
           </li>
         </ul>
       </section>
 
-      <footer className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-800">
+      <footer className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-800">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           This briefing is automatically curated from today's most significant tech news stories. 
           For detailed coverage, click through to the individual articles in our main feed.
@@ -202,7 +191,7 @@ async function TodayContent() {
 
 export default function TodayPage() {
   return (
-    <div className="container max-w-3xl py-6">
+    <div className="container max-w-4xl py-6">
       <Suspense fallback={<TodaySkeleton />}>
         <TodayContent />
       </Suspense>
