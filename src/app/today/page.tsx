@@ -1,10 +1,9 @@
-'use client';
-
 import { Suspense } from 'react';
 import { fetchNews } from '@/lib/newsService';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import type { NewsArticle } from '@/lib/newsService';
+import NewsSection from '@/components/NewsSectionClient';
 
 async function generateDailySummary(articles: NewsArticle[]) {
   // Group articles by category for analysis
@@ -68,47 +67,7 @@ function TodaySkeleton() {
   );
 }
 
-function NewsSection({ title, articles }: { title: string; articles: NewsArticle[] }) {
-  if (!articles.length) return null;
-
-  return (
-    <section className="mb-8">
-      <h2 className="text-2xl font-bold mb-4 text-blue-900 dark:text-blue-100">{title}</h2>
-      <div className="grid md:grid-cols-2 gap-6">
-        {articles.map((article, i) => (
-          <a
-            key={article.id}
-            href={article.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-          >
-            {article.thumbnail && (
-              <div className="relative aspect-[16/9]">
-                <Image
-                  src={article.thumbnail}
-                  alt={article.title}
-                  fill
-                  className="object-cover transition-opacity group-hover:opacity-90"
-                />
-              </div>
-            )}
-            <div className="p-4">
-              <h3 className="font-bold text-lg mb-2 group-hover:text-blue-500">{article.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Source: {article.source} {article.region && `(${article.region})`}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                {article.contentSnippet}
-              </p>
-            </div>
-          </a>
-        ))}
-      </div>
-    </section>
-  );
-}
-
+// Server Component
 async function TodayContent() {
   const articles = await fetchNews();
   const summary = await generateDailySummary(articles);
@@ -152,7 +111,7 @@ async function TodayContent() {
         </div>
       </div>
 
-      <section className="mt-12 p-8 bg-blue-900 dark:bg-blue-950 text-white rounded-xl">
+      <section className="mt-12 p-6 bg-blue-900/20 rounded-xl">
         <h2 className="text-2xl font-bold mb-6">Key Takeaways</h2>
         <ul className="space-y-4 text-lg">
           <li className="flex items-start">
@@ -189,6 +148,7 @@ async function TodayContent() {
   );
 }
 
+// Page Component
 export default function TodayPage() {
   return (
     <div className="container max-w-4xl py-6">
