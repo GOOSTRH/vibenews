@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from 'next/link';
+import MobileNav from '@/components/MobileNav';
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 const NAVIGATION = [
+  { name: 'Today in Tech', href: '/today' },
   { name: 'World', href: '/world' },
   { name: 'Politics', href: '/politics' },
   { name: 'Business', href: '/business' },
@@ -35,16 +37,21 @@ export default function RootLayout({
       <body className={`${inter.className} bg-[#121212] min-h-screen`}>
         <header className="bg-[#1e1e1e] border-b border-gray-800 sticky top-0 z-50">
           <nav className="container mx-auto px-4 py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center justify-between">
               <Link href="/" className="text-xl font-bold text-white hover:text-blue-400">
                 VibeNews
               </Link>
-              <div className="flex flex-wrap gap-4 sm:gap-6 text-sm">
+              
+              {/* Mobile Navigation */}
+              <MobileNav />
+
+              {/* Desktop Navigation */}
+              <div className="hidden sm:flex items-center space-x-6">
                 {NAVIGATION.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="text-gray-300 hover:text-white transition-colors"
+                    className="text-sm text-gray-300 hover:text-white transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -55,8 +62,8 @@ export default function RootLayout({
         </header>
 
         <main className="min-h-screen bg-[#121212]">
-          <div className="container mx-auto px-4">
-            <div className="max-w-screen-xl mx-auto bg-[#1e1e1e] min-h-screen">
+          <div className="container mx-auto">
+            <div className="max-w-screen-xl mx-auto bg-[#1e1e1e] min-h-screen py-4 sm:py-6">
               {children}
             </div>
           </div>
