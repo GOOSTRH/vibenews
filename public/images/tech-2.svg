@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="100%" height="100%" fill="#f0f9ff"/>
+  <g transform="translate(400,300)">
+    <path d="M-120,-120 L120,-120 L120,120 L-120,120 Z" fill="#3b82f6" opacity="0.1"/>
+    <path d="M-100,-100 L100,-100 L100,100 L-100,100 Z" fill="#3b82f6" opacity="0.2"/>
+    <path d="M-80,-80 L80,-80 L80,80 L-80,80 Z" fill="#3b82f6" opacity="0.3"/>
+    <circle r="30" fill="#3b82f6"/>
+    <path d="M-40,-40 L40,40 M-40,40 L40,-40" stroke="#fff" stroke-width="6"/>
+  </g>
+  <text x="400" y="500" text-anchor="middle" font-family="system-ui" font-size="24" fill="#3b82f6">
+    Innovation
+  </text>
+</svg> 

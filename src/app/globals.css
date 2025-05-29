@@ -1,26 +1,181 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 17, 24, 39;
+  --background-rgb: 255, 255, 255;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --foreground-rgb: 224, 224, 224;
+  --background-rgb: 30, 30, 30;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-[#e0e0e0] transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-gray-900 dark:text-white;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl leading-tight;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl leading-tight;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl leading-snug;
+  }
+
+  p {
+    @apply leading-relaxed text-gray-700 dark:text-[#e0e0e0];
+  }
+
+  article p {
+    @apply mb-4;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-3 sm:px-4 lg:px-6;
+  }
+
+  .link-hover {
+    @apply transition-colors duration-200 text-gray-700 dark:text-[#e0e0e0] hover:text-blue-600 dark:hover:text-blue-400;
+  }
+
+  .card {
+    @apply bg-white dark:bg-[#252525] rounded-lg border border-gray-200 dark:border-[#333333] shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-[#1e1e1e];
+  }
+
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:ring-blue-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white dark:bg-[#252525] border border-gray-300 dark:border-[#333333] text-gray-700 dark:text-[#e0e0e0] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] focus:ring-gray-500;
+  }
+
+  .input {
+    @apply px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-[#333333] bg-white dark:bg-[#252525] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400;
+  }
+
+  .nav-link {
+    @apply px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-[#e0e0e0] hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200;
+  }
+
+  .nav-link-active {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+}
+
+/* Custom scrollbar for Webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-[#252525];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-[#404040] rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-[#505050];
+}
+
+/* Article content styles */
+.article-content {
+  @apply prose prose-sm dark:prose-invert max-w-none;
+}
+
+.article-content img {
+  @apply rounded-lg;
+}
+
+/* News card styles */
+.news-card {
+  @apply card overflow-hidden;
+}
+
+.news-card-image {
+  @apply relative w-full;
+}
+
+.news-card-image img {
+  @apply aspect-[16/9] object-cover w-full;
+}
+
+.news-card-content {
+  @apply p-3 sm:p-4;
+}
+
+.news-card-title {
+  @apply text-lg font-bold mb-2 text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200;
+}
+
+.news-card-excerpt {
+  @apply text-sm text-gray-600 dark:text-[#e0e0e0] line-clamp-2;
+}
+
+.news-card-meta {
+  @apply mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400;
+}
+
+/* Breaking news banner */
+.breaking-news {
+  @apply bg-red-600 dark:bg-red-700 text-white px-3 py-2 flex items-center justify-between text-sm;
+}
+
+/* Newsletter section */
+.newsletter-section {
+  @apply bg-gray-50 dark:bg-[#252525] border-t border-b border-gray-200 dark:border-[#333333] py-8;
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
