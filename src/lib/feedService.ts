@@ -83,9 +83,15 @@ class FeedService {
         baseUrl = window.location.origin;
       } else {
         // Server-side: use environment variables
-        baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
-          ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-          : process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+        if (process.env.VERCEL_URL) {
+          baseUrl = `https://${process.env.VERCEL_URL}`;
+        } else if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+          baseUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+        } else if (process.env.NEXT_PUBLIC_URL) {
+          baseUrl = process.env.NEXT_PUBLIC_URL;
+        } else {
+          baseUrl = 'http://localhost:3000';
+        }
       }
 
       // Log the constructed base URL for debugging

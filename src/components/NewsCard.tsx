@@ -34,25 +34,25 @@ export default function NewsCard({ article }: NewsCardProps) {
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+      className="group block bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mx-auto max-w-2xl w-full"
     >
-      <div className="flex flex-col sm:flex-row gap-3 p-3">
-        <div className="w-full sm:w-40 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 p-2 sm:p-3">
+        <div className="w-full sm:w-32 flex-shrink-0">
           <div className="relative aspect-[16/9] sm:aspect-square rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700">
             <Image
               src={imageError ? getFallbackImage() : (article.thumbnail || getFallbackImage())}
               alt={article.title}
               fill
               className="object-cover transition-opacity group-hover:opacity-90"
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 160px"
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 128px"
               onError={() => setImageError(true)}
               priority={false}
             />
           </div>
         </div>
         
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-1">
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
             <span className="font-medium">{article.source}</span>
             {article.region && (
               <>
@@ -64,19 +64,19 @@ export default function NewsCard({ article }: NewsCardProps) {
             <time>{formattedDate}</time>
           </div>
           
-          <h2 className="text-base font-semibold leading-snug mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
+          <h2 className="text-sm sm:text-base font-semibold leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
             {article.title}
           </h2>
           
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
             {article.contentSnippet}
           </p>
 
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 pt-1">
             {article.categories.map((category) => (
               <span
                 key={category}
-                className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                className="px-1.5 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
               >
                 {category}
               </span>
